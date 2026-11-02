@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: BiniTech Alerts
+  threads:
+    virtual:
+      enabled: true
+  data:
+    mongodb:
+      uri: ${ALERTS_MONGODB_URI}
+      database: ${ALERTS_MONGODB_DATABASE:binitech_alerts}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        prefetch: 20
+        default-requeue-rejected: false
+  mvc:
+    async:
+      request-timeout: -1
+
+server:
+  port: ${PORT:8084}
+  shutdown: graceful
+
+alerts:
+  api-token: ${ALERTS_API_TOKEN}
+  threshold-ms: ${ALERTS_THRESHOLD_MS:1000}
+  cooldown: ${ALERTS_COOLDOWN:5m}
+  probe-targets: ${ALERTS_PROBE_TARGETS:}
+  probe-timeout: ${ALERTS_PROBE_TIMEOUT:10s}
+  probe-confirmations: ${ALERTS_PROBE_CONFIRMATIONS:2}
+  probe-interval: ${ALERTS_PROBE_INTERVAL:30s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    rabbit:
+      enabled: false

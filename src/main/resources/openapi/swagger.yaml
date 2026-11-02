@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: BiniTech Alerts API
+  version: 1.0.0
+  description: >-
+    Alertas de lentidão e indisponibilidade do BiniTech PDV. Recebe as requisições lentas
+    publicadas pelo PDV no RabbitMQ (routing key request.slow), sonda os serviços públicos e
+    entrega os alertas em tempo real ao app Android pelo stream SSE GET /api/alerts/stream.
+    Todas as rotas /api exigem o token Bearer configurado em ALERTS_API_TOKEN.
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+tags:
+  - name: Alerts
+    description: Consulta, reconhecimento e teste de alertas
+paths:
+  /api/alerts:
+    get:
+      tags: [Alerts]
+      operationId: listAlerts
+      summary: Alertas mais recentes
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: Alertas do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AlertDTO' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/alerts/{id}/ack:
+    post:
+      tags: [Alerts]
+      operationId: acknowledgeAlert
+      summary: Reconhecer um alerta (para o alarme no app)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alerta reconhecido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertDTO' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/alerts/test:
+    post:
+      tags: [Alerts]
+      operationId: sendTestAlert
+      summary: Dispara um alerta de teste para conferir o alarme do app
+      responses:
+        '201':
+          description: Alerta de teste criado e enviado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlertDTO' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/alerts/targets:
+    get:
+      tags: [Alerts]
+      operationId: listTargets
+      summary: Situação dos serviços sondados
+      responses:
+        '200':
+          description: Último resultado de cada sonda
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TargetStatusDTO' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Unauthorized:
+      description: Token ausente ou inválido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorDTO' }
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorDTO' }
+  schemas:
+    AlertKind:
+      type: string
+      enum: [SLOW_REQUEST, PROBE_SLOW, PROBE_DOWN, PROBE_RECOVERED, TEST]
+    AlertSeverity:
+      type: string
+      enum: [CRITICAL, WARNING, INFO]
+    AlertDTO:
+      type: object
+      required: [id, kind, severity, service, title, message, occurrences, firstSeenAt, lastSeenAt, acknowledged, noisy]
+      properties:
+        id: { type: string }
+        kind: { $ref: '#/components/schemas/AlertKind' }
+        severity: { $ref: '#/components/schemas/AlertSeverity' }
+        service: { type: string }
+        title: { type: string }
+        message: { type: string }
+        method: { type: string }
+        path: { type: string }
+        status: { type: integer }
+        durationMs: { type: integer, format: int64 }
+        thresholdMs: { type: integer, format: int64 }
+        occurrences: { type: integer }
+        firstSeenAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+        acknowledged: { type: boolean }
+        acknowledgedAt: { type: string, format: date-time }
+        noisy: { type: boolean, description: Se o app deve tocar o alarme }
+    TargetStatusDTO:
+      type: object
+      required: [name, url, healthy]
+      properties:
+        name: { type: string }
+        url: { type: string }
+        healthy: { type: boolean }
+        lastStatus: { type: integer }
+        lastDurationMs: { type: integer, format: int64 }
+        lastError: { type: string }
+        lastCheckedAt: { type: string, format: date-time }
+    ErrorDTO:
+      type: object
+      properties:
+        message: { type: string }
