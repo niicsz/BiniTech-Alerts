@@ -2,12 +2,12 @@ package com.binitech.alerts.adapters.outbound.push
 
 import com.binitech.alerts.application.ports.outbound.AlertBroadcastPort
 import com.binitech.alerts.domain.Alert
-import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import tools.jackson.databind.ObjectMapper
 
 class SseAlertBroadcaster(private val json: ObjectMapper) : AlertBroadcastPort {
 
