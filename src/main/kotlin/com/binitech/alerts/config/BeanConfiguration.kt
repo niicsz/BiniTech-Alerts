@@ -11,13 +11,13 @@ import com.binitech.alerts.application.ports.inbound.ProbeUseCase
 import com.binitech.alerts.application.ports.outbound.AlertRepositoryPort
 import com.binitech.alerts.application.usecases.AlertService
 import com.binitech.alerts.application.usecases.ProbeService
-import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Clock
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.data.mongodb.core.MongoTemplate
+import tools.jackson.databind.ObjectMapper
 
 @Configuration
 class BeanConfiguration {

@@ -4,10 +4,9 @@ spring:
   threads:
     virtual:
       enabled: true
-  data:
-    mongodb:
-      uri: ${ALERTS_MONGODB_URI}
-      database: ${ALERTS_MONGODB_DATABASE:binitech_alerts}
+  mongodb:
+    uri: ${ALERTS_MONGODB_URI}
+    database: ${ALERTS_MONGODB_DATABASE:binitech_alerts}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
