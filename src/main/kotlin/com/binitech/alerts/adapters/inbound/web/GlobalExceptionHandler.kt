@@ -1,6 +1,7 @@
 package com.binitech.alerts.adapters.inbound.web
 
 import com.binitech.alerts.adapters.inbound.web.generated.model.ErrorDTO
+import com.binitech.alerts.adapters.outbound.push.SseAlertBroadcaster
 import com.binitech.alerts.domain.ResourceNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,6 +17,10 @@ class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException::class)
     fun notFound(e: ResourceNotFoundException): ResponseEntity<ErrorDTO> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorDTO(message = e.message))
+
+    @ExceptionHandler(SseAlertBroadcaster.TooManySubscribersException::class)
+    fun tooManySubscribers(): ResponseEntity<Void> =
+        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).header("Retry-After", "30").build()
 
     @ExceptionHandler(
         MissingServletRequestParameterException::class,

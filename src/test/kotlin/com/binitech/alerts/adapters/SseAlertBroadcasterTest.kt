@@ -6,6 +6,8 @@ import com.binitech.alerts.domain.AlertKind
 import com.binitech.alerts.domain.Severity
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import tools.jackson.databind.json.JsonMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -32,5 +34,14 @@ class SseAlertBroadcasterTest {
         assertEquals("PROBE_RECOVERED", payload["kind"])
         assertEquals(false, payload["noisy"])
         assertEquals("2026-11-01T12:00:00Z", payload["lastSeenAt"])
+    }
+
+    @Test
+    @DisplayName("Recusa assinantes acima do limite")
+    fun subscriberLimit() {
+        val broadcaster = SseAlertBroadcaster(JsonMapper.builder().build())
+        repeat(SseAlertBroadcaster.MAX_SUBSCRIBERS) { broadcaster.subscribe() }
+        assertEquals(SseAlertBroadcaster.MAX_SUBSCRIBERS, broadcaster.subscriberCount())
+        assertFailsWith<SseAlertBroadcaster.TooManySubscribersException> { broadcaster.subscribe() }
     }
 }
