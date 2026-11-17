@@ -16,7 +16,8 @@ class ApiTokenFilter(apiToken: String) : OncePerRequestFilter() {
         require(apiToken.length >= MIN_TOKEN_LENGTH) { "ALERTS_API_TOKEN deve ter ao menos $MIN_TOKEN_LENGTH caracteres." }
     }
 
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean = !request.requestURI.startsWith("/api/")
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean =
+        !request.requestURI.removePrefix(request.contextPath.orEmpty()).startsWith("/api/")
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         val header = request.getHeader("Authorization").orEmpty()

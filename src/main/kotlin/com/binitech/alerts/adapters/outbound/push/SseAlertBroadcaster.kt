@@ -3,7 +3,8 @@ package com.binitech.alerts.adapters.outbound.push
 import com.binitech.alerts.application.ports.outbound.AlertBroadcastPort
 import com.binitech.alerts.domain.Alert
 import java.io.IOException
-import java.util.concurrent.CopyOnWriteArrayList
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
@@ -12,10 +13,13 @@ import tools.jackson.databind.ObjectMapper
 class SseAlertBroadcaster(private val json: ObjectMapper) : AlertBroadcastPort {
 
     private val log = LoggerFactory.getLogger(SseAlertBroadcaster::class.java)
-    private val subscribers = CopyOnWriteArrayList<SseEmitter>()
+    private val subscribers: MutableSet<SseEmitter> = ConcurrentHashMap.newKeySet()
 
     fun subscribe(): SseEmitter {
-        val emitter = SseEmitter(0L)
+        if (subscribers.size >= MAX_SUBSCRIBERS) {
+            throw TooManySubscribersException()
+        }
+        val emitter = SseEmitter(STREAM_TIMEOUT.toMillis())
         subscribers.add(emitter)
         emitter.onCompletion { subscribers.remove(emitter) }
         emitter.onTimeout { subscribers.remove(emitter) }
@@ -49,7 +53,12 @@ class SseAlertBroadcaster(private val json: ObjectMapper) : AlertBroadcastPort {
         }
     }
 
+    class TooManySubscribersException : RuntimeException("Muitos apps conectados ao stream de alertas.")
+
     companion object {
+        const val MAX_SUBSCRIBERS = 50
+        val STREAM_TIMEOUT: Duration = Duration.ofMinutes(30)
+
         fun toPayload(alert: Alert): Map<String, Any?> = mapOf(
             "id" to alert.id,
             "kind" to alert.kind.name,
